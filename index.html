@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>일정이동 &amp; 원가산정</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2b6df6">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="일정이동">
+<style>
+:root{--bg:#f6f7f9;--fg:#1d2230;--card:#fff;--bd:#d9dde5;--ac:#2b6df6;--mu:#6b7280}
+@media(prefers-color-scheme:dark){:root{--bg:#14171d;--fg:#e8eaf0;--card:#1e222b;--bd:#343a47;--ac:#6b9bff;--mu:#9aa3b2}}
+*{box-sizing:border-box}body{margin:0;padding:12px;background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,'Malgun Gothic',sans-serif;max-width:560px;margin:auto}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:10px}
+h2{font-size:14px;color:var(--mu);margin:0 0 8px;font-weight:600}
+input,select,textarea,button{font:inherit;color:inherit;width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;background:var(--card)}
+button{background:var(--ac);color:#fff;border:0;font-weight:600}button.s{background:var(--card);color:var(--fg);border:1px solid var(--bd)}
+.r{display:flex;gap:8px;margin-bottom:8px}.r>*{flex:1}
+.st{display:block;padding:10px;border:1px solid var(--bd);border-radius:8px;margin-bottom:6px;cursor:pointer}
+.st.on{border-color:var(--ac);outline:2px solid var(--ac)}.st small{display:block;color:var(--mu)}
+.chip{display:inline-block;width:auto;margin:0 6px 6px 0;padding:6px 12px;border-radius:99px;background:var(--bg);color:var(--fg);border:1px solid var(--ac)}
+textarea{min-height:90px}.rw{display:flex;justify-content:space-between;gap:6px;align-items:center}.hl{border-color:var(--ac)!important;color:var(--ac)!important}.mv{width:auto;padding:4px 10px;display:inline-block;margin:6px 6px 0 0;font-size:14px;background:var(--bg);color:var(--fg);border:1px solid var(--bd)}#m{color:var(--mu);font-size:13px}
+.tabs{display:flex;gap:6px;position:sticky;top:0;z-index:5;background:var(--bg);padding:6px 0;margin-bottom:6px}
+.tabs button{background:var(--card);color:var(--fg);border:1px solid var(--bd)}.tabs button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.sg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}.sg button{width:auto;flex:1;min-width:80px;background:var(--card);color:var(--fg);border:1px solid var(--bd);padding:8px 6px;font-size:14px}.sg button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.mr{display:flex;gap:8px;align-items:center;margin-bottom:8px}.mr>b{flex:0 0 40px}
+.mr input{flex:1;min-width:0}.mr button{width:auto;flex:0 0 56px;padding:10px 4px;background:var(--card);color:var(--fg);border:1px solid var(--bd)}.mr button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+</style></head><body>
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px"><b>일정이동 &amp; 원가산정</b><span style="color:var(--mu);font-size:13px">v1.14</span></div>
+<div class="c"><h2>1. 월별 엑셀</h2>
+<input type="file" id="f" accept=".xlsx,.xlsm">
+<div id="fi" style="color:var(--mu);font-size:13px;margin:6px 0"></div>
+<div class="r"><select id="sh"></select><select id="nm"></select></div>
+<div class="r"><select id="nm2"></select><select id="car"></select></div>
+<div id="xr" class="r" hidden><input id="xi"><button id="xb" style="flex:0 0 80px">추가</button></div></div>
+
+<div class="tabs"><button id="t1" class="on">업무이동</button><button id="t2">원가산정</button></div>
+<div id="p1">
+<div class="c"><h2>2. 방금 끝낸 곳 (▲▼ 순서 변경)</h2><select id="sc" style="margin-bottom:8px"></select><div id="ls"></div>
+<div class="r"><button class="s" id="ac">📷 캘린더 캡처로 추가</button><button class="s" id="am">＋ 직접 추가</button></div>
+<input type="file" id="cal" accept="image/*" hidden>
+<div id="ap" hidden><input id="ad" placeholder="추가할 일정 (기관명)" style="margin-bottom:8px"><button id="ab">목록 끝에 추가</button></div>
+<div id="cm" style="color:var(--mu);font-size:13px"></div>
+</div>
+
+<div class="c"><h2>3. 계기판 km</h2>
+<div class="r"><input id="km" inputmode="numeric" placeholder="계기판 km"><button class="s" id="cam" style="flex:0 0 90px">📷 촬영</button><button class="s" id="alb" style="flex:0 0 90px">🖼 앨범</button></div>
+<input type="file" id="ph" accept="image/*" capture="environment" hidden><input type="file" id="ph2" accept="image/*" hidden>
+<div id="ch"></div><div id="m" style="color:var(--mu);font-size:13px"></div>
+<div id="kw" style="font-size:13px;margin-top:6px"></div><button class="s" id="kc" hidden style="width:auto;padding:4px 10px;font-size:13px;margin-top:6px">이 차량 km 기록 삭제</button></div>
+
+<div class="c"><h2>4. 문구 (아래 칸은 직접 수정도 가능)</h2>
+<div class="r"><input id="org" placeholder="완료한 곳 (비우면 문구만)"><select id="stt" style="flex:0 0 110px"><option>납품 완료</option><option>설치 완료</option><option>회수 완료</option><option>전달 완료</option><option>AS 완료</option></select></div>
+<select id="en" style="margin-bottom:8px"></select>
+<input id="nx" list="dl" placeholder="다음 목적지" style="margin-bottom:8px"><datalist id="dl"></datalist>
+<input id="cu" placeholder="직접 입력할 문구 (예: 복귀중 주유하겠습니다.)" style="margin-bottom:8px" hidden>
+<textarea id="out"></textarea>
+<div id="kw2" style="font-size:13px"></div>
+<div class="r" style="margin:8px 0 0"><button id="cp">복사</button><button class="s" id="sd">공유</button></div>
+<button class="s" id="rs" style="margin-top:8px;font-size:13px;padding:6px">오늘 보고 기록 초기화 (출발부터 다시)</button></div>
+
+</div>
+<div id="p2" hidden>
+<div class="c"><h2>1. 날짜 · 수요처</h2>
+<input id="cd" placeholder="날짜 (11/04)" style="margin-bottom:8px">
+<div class="sg" id="bt"></div>
+<input id="cl" list="dl" placeholder="수요처 / 장소"></div>
+<div class="c"><h2>2. 식사 (금액 = 총액, 괄호 = 인원)</h2><div id="ml"></div></div>
+<div class="c"><h2>3. 숙박 · 주차 · 계근 · 지사지원</h2>
+<div class="r"><input id="ho" inputmode="numeric" placeholder="숙박비 총액 (원)"><select id="hn" style="flex:0 0 90px"></select></div>
+<div class="r"><input id="pk" inputmode="numeric" placeholder="주차비 (원)"><input id="pkn" inputmode="numeric" placeholder="대수" style="flex:0 0 80px"></div>
+<div class="r"><input id="wg" inputmode="numeric" placeholder="계근비 (원)"><input id="wgn" inputmode="numeric" placeholder="대수" style="flex:0 0 80px"></div>
+<select id="js" style="margin-bottom:8px"></select>
+<input id="et" placeholder="기타 줄 추가 (예: 영업지원 1명)"></div>
+<div class="c"><h2>4. 원가산정 문구 (직접 수정 가능)</h2><textarea id="co" style="min-height:140px"></textarea>
+<div class="r" style="margin:8px 0 0"><button id="ccp">복사</button><button class="s" id="csd">공유</button></div>
+<button class="s" id="crs" style="margin-top:8px;font-size:13px;padding:6px">새로 작성 (입력 비우기)</button></div>
+</div>
+<details class="c"><summary style="cursor:pointer;color:var(--mu);font-size:13px">변경 내역</summary><div style="font-size:13px;color:var(--mu);margin-top:6px">
+<b>v1.14</b> 원가산정: 저녁에 야식 포함(한 줄) / 야식만 따로 한 줄<br>
+<b>v1.13</b> 원가산정: 식사 인당 목록 제거(금액은 총액 직접 입력, 괄호는 인원), 숙박비 인당 버튼 제거, 식사별 없음 버튼<br>
+<b>v1.12</b> 원가산정: 아침/저녁/야식 분리·금액 목록 선택, 식사별 인원, 지사지원 최대 3명, 수요처별(수요처 1·2…) 항목 분리<br>
+<b>v1.11</b> 상단 탭(업무이동 / 원가산정) 추가, 원가산정 메모 문구 생성(조근·야근 식대, 숙박·주차·계근·지사지원)<br>
+<b>v1.10</b> 같은 수요처 일정 묶기/풀기 (예: 한국연구재단 정보통신기획평가원, 정보통신산업진흥원 - 대전)<br>
+<b>v1.9</b> 마무리 기본값 자동 설정(첫 실행·09시 이전 출발 → 이후 이동 → 마지막 일정 복귀), 이동 보고 후 다음 일정 자동 선택, 오늘 보고 기록 초기화<br>
+<b>v1.8</b> "복귀했습니다."를 마무리 선택으로 이동(도착 보고 버튼 제거), "완료 대기하겠습니다" → "대기하겠습니다."<br>
+<b>v1.7</b> "출발하겠습니다." 선택 시 앞의 완료 표기 제거 (예: OO초등학교 출발하겠습니다.)<br>
+<b>v1.6</b> "출발하겠습니다." 추가, km 검증(같은 차량의 이전 보고 km보다 작거나 같으면 경고, 증가폭 표시)<br>
+<b>v1.5</b> 다른 사람 일정(지원)·전체 일정 보기, "숙소 이동하여 업무 마무리하겠습니다." 추가, 캘린더 인식 시 @ 등 기호 제거<br>
+<b>v1.4</b> 상태 띄어쓰기(납품 완료 등), 촬영 버튼 복구+앨범 선택, 2번째 인원 선택, 이름·차량 추가를 입력칸 방식으로 변경<br>
+<b>v1.3</b> 이름·차량 선택/추가(방우성 고정 해결), 직접 입력 문구·현장 퇴근 문구, 일정 순서 변경, 캘린더 캡처/직접 일정 추가, km 인식 후보 정렬<br>
+<b>v1.2</b> 버전 표시·변경 내역 추가<br>
+<b>v1.1</b> 위메이드/오렌지 유지, 시트 아래 차량·인원 표 기준, 이동/복귀/대기 선택, 설치 우선 판정<br>
+<b>v1.0</b> 최초 버전</div></details>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const LG=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
+const LS=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const pad=c=>/^\d+$/.test(String(c))?String(c).padStart(4,'0'):String(c);
+const clean=t=>String(t).replace(/[@#*|_~`^<>\\]/g,' ').replace(/\s+/g,' ').trim();
+const NEW='<option value="__new">＋ 직접 입력…</option>';
+var DB={},ST=[],idx=0,ARR=false;
+
+function parse(wb){
+  const out={};
+  wb.SheetNames.filter(n=>/^\d{1,2}\.\d{1,2}$/.test(n)).forEach(n=>{
+    const ws=wb.Sheets[n],rg=XLSX.utils.decode_range(ws['!ref']||'A1');
+    const v=(r,c)=>{const x=ws[XLSX.utils.encode_cell({r,c})];return x&&x.v!=null?String(x.v).trim():''};
+    const fill={};
+    (ws['!merges']||[]).forEach(m=>{const t=v(m.s.r,m.s.c);
+      for(let r=m.s.r;r<=m.e.r;r++)for(let c=m.s.c;c<=m.e.c;c++)fill[r+','+c]=t});
+    const g=(r,c)=>(r+','+c) in fill?fill[r+','+c]:v(r,c);
+    const rows=[],roster=[];let r=3;
+    for(;r<=rg.e.r;r++){
+      let any=false;for(let c=0;c<=10;c++)if(v(r,c)){any=true;break}
+      if(!any)break;
+      rows.push({car:g(r,0),p:[g(r,1),g(r,2)],eno:g(r,4),org:g(r,5),note:g(r,10)});
+    }
+    for(;r<=rg.e.r;r++){
+      const a=v(r,0),b=v(r,1);
+      if(b&&!roster.some(x=>x.name===b))roster.push({car:/^\d+$/.test(a)?a:'',name:b});
+    }
+    out[n]={rows,roster};
+  });
+  return out;
+}
+function load(db,label){
+  DB=db;LS('db2',db);$('fi').textContent=label?('불러온 파일: '+label):'';
+  const ns=Object.keys(db);
+  $('sh').innerHTML=ns.map(n=>`<option>${n}</option>`).join('');
+  const d=new Date(),t=String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0');
+  $('sh').value=ns.includes(t)?t:ns[0];
+  fillNames();
+}
+const cur=()=>DB[$('sh').value]||{rows:[],roster:[]};
+function names(){const s=new Set(LG('xn')||[]);cur().roster.forEach(x=>s.add(x.name));cur().rows.forEach(r=>r.p.forEach(x=>x&&s.add(x)));return[...s]}
+function fill2(v){$('nm2').innerHTML='<option value="">(2번째 인원 없음)</option>'+names().map(x=>`<option>${x}</option>`).join('')+NEW;$('nm2').value=v||''}
+function fillNames(sel){
+  const n=names();$('nm').innerHTML=n.map(x=>`<option>${x}</option>`).join('')+NEW;
+  const me=sel||LG('me');if(me&&n.includes(me))$('nm').value=me;
+  onName();
+}
+function fillCar(sel){
+  const m=new Map();(LG('xc')||[]).forEach(c=>m.set(pad(c),''));
+  cur().roster.forEach(x=>x.car&&m.set(pad(x.car),x.name));
+  cur().rows.forEach(r=>{if(r.car){const c=pad(r.car);if(!m.get(c))m.set(c,r.p[0])}});
+  if(sel&&!m.has(sel))m.set(sel,'');
+  $('car').innerHTML=[...m].map(([c,o])=>`<option value="${c}">${c}${o?'  ('+o+')':''}</option>`).join('')+NEW;
+  if(sel)$('car').value=sel;
+}
+function guess(t,e){return /회수/.test(t)?'회수 완료':/설치/.test(t)?'설치 완료':/전달/.test(t)?'전달 완료':/^AS/.test(e||'')?'AS 완료':'납품 완료'}
+function onName(){
+  const name=$('nm').value;LS('me',name);
+  const rows=cur().rows.filter(r=>r.p.includes(name));
+  const o2=rows[0]?(rows[0].p[0]===name?rows[0].p[1]:rows[0].p[0]):'';fill2(names().includes(o2)?o2:'');
+  const ov=(LG('cars')||{})[name],ro=(cur().roster.find(x=>x.name===name)||{}).car;
+  const c=(rows[0]&&rows[0].car)||ov||ro||'';
+  fillCar(c?pad(String(c).replace(/\.0$/,'')):'');
+  fillSc();stops();
+}
+function fillSc(){const nm=$('nm').value,q=new Set();cur().rows.forEach(r=>r.p.forEach(x=>x&&x!==nm&&q.add(x)));
+  $('sc').innerHTML='<option value="">내 일정</option>'+[...q].map(x=>`<option value="${x}">${x} 일정 (지원)</option>`).join('')+'<option value="*">전체 일정</option>'}
+function stops(){
+  const name=$('nm').value,src=$('sc').value;
+  const rows=src==='*'?cur().rows:cur().rows.filter(r=>r.p.includes(src||name));
+  ST=[];
+  rows.forEach(x=>{
+    if(!x.org)return;const l=ST[ST.length-1];
+    if(l&&l.raw===x.org){l.n.push(x.note);return}
+    ST.push({raw:x.org,org:x.org,n:[x.note],e:x.eno});
+  });
+  ST.forEach(s=>{s.n=s.n.filter(Boolean);s.st=guess(s.n.join(' '),s.e)});
+  const key=$('sh').value+'|'+name+(src?'|'+src:'');
+  ((LG('ex')||{})[key]||[]).forEach(x=>ST.push({raw:clean(x.org),org:clean(x.org),n:['추가'],e:'',st:(x.st||'').replace(/\s*완료$/,' 완료')}));
+  ((LG('mg')||{})[key]||[]).forEach(g=>{const ps=g.map(r=>ST.find(s=>s.raw===r)).filter(Boolean);
+    if(ps.length<2)return;const at=ST.indexOf(ps[0]);ST.splice(at,0,mk(ps));ps.forEach(p=>ST.splice(ST.indexOf(p),1))});
+  const ord=(LG('ord')||{})[key];
+  if(ord)ST.sort((a,b)=>(ord.indexOf(a.raw)<0?999:ord.indexOf(a.raw))-(ord.indexOf(b.raw)<0?999:ord.indexOf(b.raw)));
+  idx=0;ARR=false;list();pick();
+}
+const loc=o=>{const i=o.indexOf(' - ');return i>0?o.slice(i+3):''};
+function joinOrgs(l){
+  const p=l.map(o=>{const i=o.indexOf(' - ');return i>0?[o.slice(0,i),o.slice(i+3)]:[o,'']}),out=[];let i=0;
+  while(i<p.length){let j=i;while(p[i][1]&&j+1<p.length&&p[j+1][1]===p[i][1])j++;
+    const nm=p.slice(i,j+1).map(x=>x[0]).join(', ');out.push(p[i][1]?nm+' - '+p[i][1]:nm);i=j+1}
+  return out.join(', ');
+}
+const curKey=()=>$('sh').value+'|'+$('nm').value+($('sc').value?'|'+$('sc').value:'');
+const mk=ps=>({raw:ps.map(p=>p.raw).join('+'),org:joinOrgs(ps.map(p=>p.org)),n:[].concat(...ps.map(p=>p.n)),e:ps[0].e,st:ps[0].st,parts:ps});
+function saveMg(){const k=curKey(),m=LG('mg')||{},o=LG('ord')||{};
+  m[k]=ST.filter(s=>s.parts).map(s=>s.parts.map(p=>p.raw));o[k]=ST.map(s=>s.raw);LS('mg',m);LS('ord',o)}
+function merge(i){const a=ST[i],b=ST[i+1];if(!b)return;ST.splice(i,2,mk((a.parts||[a]).concat(b.parts||[b])));saveMg();idx=i;ARR=false;list();pick()}
+function split(i){const s=ST[i];if(!s||!s.parts)return;ST.splice(i,1,...s.parts);saveMg();idx=i;ARR=false;list();pick()}
+function list(){
+  $('dl').innerHTML=ST.map(s=>`<option value="${s.org}">`).join('');
+  $('ls').innerHTML=ST.length?ST.map((s,i)=>{const nx=ST[i+1],same=nx&&loc(s.org)&&loc(s.org)===loc(nx.org);
+    return `<div class="st ${!ARR&&i===idx?'on':''}" data-i="${i}">${i+1}. ${s.org}<small>${s.n.join(' / ')}</small><div><button class="mv" data-a="up">▲</button><button class="mv" data-a="dn">▼</button>${nx?`<button class="mv ${same?'hl':''}" data-a="mg">${same?'＋ 같은 수요처 묶기':'묶기'}</button>`:''}${s.parts?'<button class="mv" data-a="sp">풀기</button>':''}</div></div>`}).join(''):'<small>이 날짜·이름의 일정이 없습니다. 아래에서 추가하세요.</small>';
+  $('ls').querySelectorAll('.st').forEach(e=>e.onclick=()=>{idx=+e.dataset.i;ARR=false;list();pick()});
+  $('ls').querySelectorAll('.mv').forEach(b=>b.onclick=ev=>{ev.stopPropagation();
+    const i=+b.closest('.st').dataset.i,a=b.dataset.a;
+    if(a==='mg')merge(i);else if(a==='sp')split(i);
+    else{const j=i+(a==='up'?-1:1);if(j<0||j>=ST.length)return;[ST[i],ST[j]]=[ST[j],ST[i]];saveMg();idx=j;list();pick()}});
+}
+function enOpts(sel){
+  const lab={'이동':'이동하겠습니다','직접':'✎ 직접 입력'};
+  const all=['이동','출발하겠습니다.','복귀하겠습니다.','복귀했습니다.','복귀중 현장 퇴근하겠습니다.','복귀중 식사후 현장 퇴근하겠습니다.','숙소 이동하여 업무 마무리하겠습니다.','대기하겠습니다.'].concat(LG('ph')||[],['직접']);
+  $('en').innerHTML=all.map(x=>`<option value="${x}">${lab[x]||x}</option>`).join('');
+  if(sel)$('en').value=sel;
+}
+var enManual=false;
+function repKey(){return $('sh').value+'|'+$('nm').value}
+function autoEn(){
+  const n=(LG('rep')||{})[repKey()]||0,h=new Date().getHours(),k=!!$('km').value.trim();
+  if(n===0&&(!k||h<9))return '출발하겠습니다.';
+  return ST[idx+1]?'이동':'복귀하겠습니다.';
+}
+function done(en0){
+  const r=LG('rep')||{},k=repKey();r[k]=(r[k]||0)+1;LS('rep',r);enManual=false;
+  if(en0==='이동'&&ST[idx+1]){idx++;ARR=false;$('km').value='';list();pick()}
+  else{enOpts(autoEn());compose()}
+}
+$('rs').onclick=()=>{const r=LG('rep')||{};delete r[repKey()];LS('rep',r);idx=0;$('km').value='';list();pick()};
+function pick(){
+  enManual=false;
+  const s=ST[idx];
+  if(!s){$('org').value='';$('nx').value='';enOpts(autoEn())}
+  else{$('org').value=s.org;$('stt').value=s.st;$('nx').value=ST[idx+1]?ST[idx+1].org:'';enOpts(autoEn())}
+  compose();
+}
+const kmh=()=>LG('kmh')||{};
+function chk(){
+  const v=$('km').value.trim(),c=$('car').value,p=kmh()[c];let m='',bad=false;
+  if(p){m=`이전 ${p.km}km (${p.d})`;
+    if(/^\d+$/.test(v)){const d=+v-p.km;
+      if(d<=0){m=`⚠ 이전 보고 ${p.km}km (${p.d})보다 ${d===0?'같습니다':'작습니다'}. 계기판을 다시 확인하세요.`;bad=true}
+      else if(String(p.km).length!==v.length){m=`⚠ 자릿수가 이전 ${p.km}km와 다릅니다. 인식 오류인지 확인하세요.`;bad=true}
+      else{m=`이전 ${p.km}km (${p.d}) 대비 +${d}km`;if(d>1000){m+=' ⚠ 증가폭이 큽니다';bad=true}}}}
+  [$('kw'),$('kw2')].forEach(e=>{e.textContent=m;e.style.color=bad?'#d93025':'var(--mu)'});
+  $('kc').hidden=!p;
+}
+function saveKm(){const v=$('km').value.trim(),c=$('car').value;if(!/^\d+$/.test(v)||!c||c==='__new')return;
+  const h=kmh(),d=new Date(),z=x=>String(x).padStart(2,'0');
+  h[c]={km:+v,d:`${d.getMonth()+1}/${d.getDate()} ${z(d.getHours())}:${z(d.getMinutes())}`};LS('kmh',h)}
+$('kc').onclick=()=>{const h=kmh();delete h[$('car').value];LS('kmh',h);chk()};
+function compose(){
+  chk();
+  const tail=`-${[$('nm').value,$('nm2').value].filter(x=>x&&x!=='__new').join(', ')}(${$('car').value==='__new'?'':$('car').value}-${$('km').value.trim()})`,o=$('org').value.trim(),nx=$('nx').value.trim(),en=$('en').value;
+  $('cu').hidden=en!=='직접';
+  if(ARR){$('out').value=`복귀했습니다.\n${tail}`;return}
+  if(en==='복귀했습니다.'){$('out').value=`${en}\n${tail}`;return}
+  if(en==='출발하겠습니다.'||en==='대기하겠습니다.'){$('out').value=`${o?o+' ':''}${en}\n${tail}`;return}
+  const end=en==='이동'?`${nx||'(다음 목적지)'} 이동하겠습니다.`:en==='직접'?$('cu').value.trim():en;
+  $('out').value=`${o?o+' '+$('stt').value+'. ':''}${end}\n${tail}`;
+}
+$('f').onchange=async e=>{const f=e.target.files[0];if(!f)return;
+  try{load(parse(XLSX.read(await f.arrayBuffer(),{type:'array'})),f.name)}catch(x){$('fi').textContent='파일을 읽지 못했습니다: '+x.message}};
+$('sh').onchange=()=>{dT=false;fillNames();if(!$('p2').hidden)syncCost()};
+$('sc').onchange=()=>stops();
+var XK='';
+function ask(k){XK=k;$('xr').hidden=false;$('xi').value='';$('xi').placeholder=k==='car'?'추가할 차량번호':'추가할 이름';$('xi').focus()}
+$('nm').onchange=()=>{if($('nm').value==='__new')return ask('nm');$('xr').hidden=true;onName()};
+$('nm2').onchange=()=>{if($('nm2').value==='__new')return ask('nm2');$('xr').hidden=true;compose()};
+$('car').onchange=()=>{if($('car').value==='__new')return ask('car');$('xr').hidden=true;
+  const c=LG('cars')||{},n=$('nm').value;if(n){c[n]=$('car').value;LS('cars',c)}compose()};
+$('xb').onclick=()=>{let v=$('xi').value.trim();if(!v)return;
+  if(XK==='car'){v=pad(v);const x=LG('xc')||[];if(!x.includes(v)){x.push(v);LS('xc',x)}fillCar(v);const c=LG('cars')||{};c[$('nm').value]=v;LS('cars',c)}
+  else{const x=LG('xn')||[];if(!x.includes(v)){x.push(v);LS('xn',x)}if(XK==='nm')fillNames(v);else fill2(v)}
+  $('xr').hidden=true;compose()};
+['org','stt','nx','km','en','cu'].forEach(i=>$(i).oninput=()=>{if(i==='en')enManual=true;if(i==='km'){LS('km',$('km').value);if(!enManual)enOpts(autoEn())}compose()});
+$('cp').onclick=async()=>{saveKm();const en0=$('en').value,t=$('out').value,p=$('cu').value.trim();
+  if($('en').value==='직접'&&p){const a=LG('ph')||[];if(!a.includes(p)){a.push(p);LS('ph',a)}enOpts(p);$('cu').value='';compose();$('out').value=t}
+  try{await navigator.clipboard.writeText(t)}catch(e){$('out').select();document.execCommand('copy')}
+  $('cp').textContent='복사됨 ✓';setTimeout(()=>$('cp').textContent='복사',1500);done(en0)};
+$('sd').onclick=()=>{saveKm();if(navigator.share){const en0=$('en').value;navigator.share({text:$('out').value}).then(()=>done(en0)).catch(()=>{})}else $('cp').click()};
+
+// 일정 추가
+function addStop(org){org=clean(org);if(!org)return;
+  const k=$('sh').value+'|'+$('nm').value,ex=LG('ex')||{};(ex[k]=ex[k]||[]).push({org,st:guess(org,'')});LS('ex',ex);
+  $('ad').value='';$('ap').hidden=true;onName();idx=ST.length-1;list();pick()}
+$('am').onclick=()=>{$('ap').hidden=false;$('ad').focus()};
+$('ab').onclick=()=>addStop($('ad').value);
+$('ac').onclick=()=>$('cal').click();
+
+// OCR (Tesseract.js, 인터넷 필요)
+async function T(){if(window.Tesseract)return;await new Promise((ok,no)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';s.onload=ok;s.onerror=no;document.head.appendChild(s)})}
+async function cv(f,w){const im=await createImageBitmap(f),k=Math.min(1,w/im.width),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);return c}
+$('cam').onclick=()=>$('ph').click();$('alb').onclick=()=>$('ph2').click();
+$('ph').onchange=$('ph2').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+  $('m').textContent='인식 중…(처음엔 언어 데이터 때문에 오래 걸림)';$('ch').innerHTML='';
+  try{await T();const c=await cv(f,1600),w=await Tesseract.createWorker('eng');
+    await w.setParameters({tessedit_char_whitelist:'0123456789',tessedit_pageseg_mode:'11'});
+    const last=(kmh()[$('car').value]||{}).km||+LG('km')||0,rank=t=>[...new Set(t.match(/\d{5,7}/g)||[])].filter(n=>!(n.length===7&&/^20\d\d/.test(n))).sort((a,b)=>(Math.abs(a.length-6)-Math.abs(b.length-6))||(last?Math.abs(a-last)-Math.abs(b-last):0));
+    let cand=rank((await w.recognize(c)).data.text);
+    if(!cand.length){const W=c.width*.6,H=c.height*.45;
+      for(let r=0;r<3;r++)for(let q=0;q<2;q++){const t=document.createElement('canvas');t.width=W*2;t.height=H*2;
+        t.getContext('2d').drawImage(c,q*(c.width-W),r*(c.height-H)/2,W,H,0,0,W*2,H*2);cand=cand.concat(rank((await w.recognize(t)).data.text))}
+      cand=[...new Set(cand)]}
+    await w.terminate();
+    if(!cand.length){$('m').textContent='숫자를 찾지 못했습니다. 직접 입력해 주세요.';return}
+    $('m').textContent='후보를 눌러 선택 (반드시 계기판과 대조)';
+    $('ch').innerHTML=cand.map(n=>`<button class="chip">${n}</button>`).join('');
+    $('ch').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{$('km').value=b.textContent;LS('km',b.textContent);compose()});
+    $('km').value=cand[0];LS('km',cand[0]);compose();
+  }catch(err){$('m').textContent='인식 실패: 직접 입력해 주세요.'}};
+// 캘린더 캡처 → 일정 제목 추출
+$('cal').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+  $('cm').textContent='캘린더 글자 인식 중…(한글 데이터라 처음엔 오래 걸림)';
+  try{await T();const w=await Tesseract.createWorker('kor+eng'),txt=(await w.recognize(await cv(f,1600))).data.text;await w.terminate();
+    const L=txt.split('\n').map(x=>x.trim()).filter(Boolean),i=L.findIndex(l=>/\d+\s*월\s*\d+\s*일/.test(l));
+    let t=L.slice(0,i>0?i:3).filter(l=>!/\d{1,2}:\d{2}|SKT|^[<‹←]/.test(l)).join(' ').replace(/\s*\((오전|오후)\)\s*$/,'').replace(/\s+/g,' ').trim();
+    t=clean(t);const w1=t.split(' ')[0];if(names().includes(w1))t=t.slice(w1.length).trim();
+    $('ap').hidden=false;$('ad').value=t;$('cm').textContent='인식 결과를 확인·수정한 뒤 [목록 끝에 추가]를 누르세요.';
+  }catch(err){$('cm').textContent='인식 실패: ＋ 직접 추가를 이용하세요.'}};
+
+// ===== 원가산정 탭 =====
+const dg=v=>+String(v).replace(/\D/g,'')||0;
+const fm=n=>(+String(n).replace(/\D/g,'')||0).toLocaleString('en-US');
+const ML=[['a','아침'],['d','저녁'],['n','야식']];
+const PN=[...Array(10)].map((_,i)=>`<option value="${i+1}">${i+1}명</option>`).join('');
+const dp=()=>$('nm2').value?2:1;
+const newB=loc=>{const n=dp(),m={};ML.forEach(([k])=>m[k]={s:'',x:'',n});
+  return{loc:loc||'',m,ho:'',hn:n,pk:'',pkn:'',wg:'',wgn:'',js:'0',et:'',yk:true,dirty:false}};
+var B=[newB('')],bi=0,dT=false;
+$('hn').innerHTML=PN;
+$('js').innerHTML='<option value="0">지사지원 없음</option>'+[1,2,3].map(i=>`<option value="${i}">지사지원 ${i}명</option>`).join('');
+ML.forEach(([k,l])=>$('ml').insertAdjacentHTML('beforeend',`<div class="mr"><b>${l}</b><input id="x_${k}" inputmode="numeric" placeholder="총액 (원)"><select id="n_${k}" style="flex:0 0 76px">${PN}</select><button id="z_${k}">없음</button></div>`));
+$('x_d').closest('.mr').insertAdjacentHTML('afterend','<label style="display:block;font-size:14px;margin:-2px 0 10px 40px"><input type="checkbox" id="yk" checked style="width:auto;margin-right:6px">저녁에 야식 포함 (한 줄로 표시)</label>');
+const F=['pk','pkn','wg','wgn','js','et'];
+function bSave(){const b=B[bi];b.loc=$('cl').value;ML.forEach(([k])=>b.m[k]={s:$('z_'+k).classList.contains('on')?'0':'',x:$('x_'+k).value,n:+$('n_'+k).value});
+  b.ho=$('ho').value;b.hn=+$('hn').value;F.forEach(i=>b[i]=$(i).value);b.yk=$('yk').checked}
+function bLoad(){const b=B[bi];$('cl').value=b.loc;ML.forEach(([k])=>{const m=b.m[k];$('z_'+k).classList.toggle('on',m.s==='0');$('x_'+k).disabled=m.s==='0';$('x_'+k).value=m.x;$('n_'+k).value=m.n});
+  $('ho').value=b.ho;$('hn').value=b.hn;F.forEach(i=>$(i).value=b[i]);$('yk').checked=b.yk}
+function bt(){
+  $('bt').innerHTML=B.map((_,i)=>`<button data-i="${i}" class="${i===bi?'on':''}">수요처 ${i+1}</button>`).join('')+(B.length<4?'<button data-a="add">＋ 추가</button>':'')+(B.length>1?'<button data-a="del">삭제</button>':'');
+  $('bt').querySelectorAll('button').forEach(x=>x.onclick=()=>{bSave();const a=x.dataset.a;
+    if(a==='add'){const j=ST.findIndex(s=>s.org===B[bi].loc);B.push(newB(ST[j+1]?ST[j+1].org:''));bi=B.length-1}
+    else if(a==='del'){B.splice(bi,1);bi=Math.max(0,bi-1)}
+    else bi=+x.dataset.i;
+    bLoad();bt();comp()});
+}
+function comp(){
+  bSave();const out=[],bb=B[bi];
+  $('x_n').closest('.mr').style.opacity=(bb.yk&&bb.m.d.s!=='0'&&dg(bb.m.d.x)>0)?.4:1;
+  B.forEach(b=>{const t=[];if(b.loc.trim())t.push(b.loc.trim());
+    const M=b.m,offN=b.yk&&M.d.s!=='0'&&dg(M.d.x)>0;
+    const line=(l,m,sf)=>m.s==='0'?`${l} 없음`:dg(m.x)?`${l}${sf||''} ${fm(m.x)}원 (${m.n}명)`:'';
+    [line('아침',M.a),line('저녁',M.d,offN?' (야식 포함)':''),offN?'':line('야식',M.n)].forEach(x=>x&&t.push(x));
+    if(b.ho.trim())t.push(`숙박비 ${fm(b.ho)}원 (${b.hn}명)`);
+    [['pk','pkn','주차비'],['wg','wgn','계근비']].forEach(([a,c,n])=>{if(b[a].trim())t.push(`${n} ${fm(b[a])}원${b[c].trim()?` (${b[c].trim()}대)`:''}`)});
+    if(+b.js)t.push(`지사지원 (${b.js}명)`);
+    if(b.et.trim())t.push(b.et.trim());
+    if(t.length)out.push(t.join('\n'))});
+  const d=$('cd').value.trim();$('co').value=(d?d+'\n':'')+out.join('\n\n');
+}
+function syncCost(){
+  if(!dT){const m=$('sh').value.match(/^(\d+)\.(\d+)$/);$('cd').value=m?m[1].padStart(2,'0')+'/'+m[2].padStart(2,'0'):''}
+  B.forEach((b,i)=>{if(b.dirty)return;if(i===0)b.loc=ST[idx]?ST[idx].org:'';const n=dp();ML.forEach(([k])=>b.m[k].n=n);b.hn=n});
+  bLoad();bt();comp();
+}
+function tab(n){$('p1').hidden=n!==1;$('p2').hidden=n!==2;$('t1').classList.toggle('on',n===1);$('t2').classList.toggle('on',n===2);LS('tab',n);if(n===2)syncCost()}
+$('t1').onclick=()=>tab(1);$('t2').onclick=()=>tab(2);
+['cd','cl','ho','hn','yk',...F,...ML.flatMap(([k])=>['n_'+k,'x_'+k])].forEach(i=>$(i).oninput=$(i).onchange=()=>{
+  if(i==='cd')dT=true;else B[bi].dirty=true;comp()});
+ML.forEach(([k])=>$('z_'+k).onclick=()=>{const z=$('z_'+k);z.classList.toggle('on');$('x_'+k).disabled=z.classList.contains('on');B[bi].dirty=true;comp()});
+$('ccp').onclick=async()=>{try{await navigator.clipboard.writeText($('co').value)}catch(e){$('co').select();document.execCommand('copy')}
+  $('ccp').textContent='복사됨 ✓';setTimeout(()=>$('ccp').textContent='복사',1500)};
+$('csd').onclick=()=>{if(navigator.share)navigator.share({text:$('co').value}).catch(()=>{});else $('ccp').click()};
+$('crs').onclick=()=>{B=[newB('')];bi=0;dT=false;syncCost()};
+enOpts('복귀하겠습니다.');
+const saved=LG('db2');if(saved&&Object.keys(saved).length)load(saved,LG('dbName')||'');
+const lk=LG('km');if(lk)$('km').placeholder='지난번 '+lk;
+tab(LG('tab')===2?2:1);
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script></body></html>
