@@ -1,14 +1,7 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>일정이동 &amp; 원가산정</title>
-<link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#2b6df6">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="일정이동">
+<title>업무이동 문구 v1.16</title>
 <style>
 :root{--bg:#f6f7f9;--fg:#1d2230;--card:#fff;--bd:#d9dde5;--ac:#2b6df6;--mu:#6b7280}
 @media(prefers-color-scheme:dark){:root{--bg:#14171d;--fg:#e8eaf0;--card:#1e222b;--bd:#343a47;--ac:#6b9bff;--mu:#9aa3b2}}
@@ -28,7 +21,7 @@ textarea{min-height:90px}.rw{display:flex;justify-content:space-between;gap:6px;
 .mr{display:flex;gap:8px;align-items:center;margin-bottom:8px}.mr>b{flex:0 0 40px}
 .mr input{flex:1;min-width:0}.mr button{width:auto;flex:0 0 56px;padding:10px 4px;background:var(--card);color:var(--fg);border:1px solid var(--bd)}.mr button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
 </style></head><body>
-<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px"><b>일정이동 &amp; 원가산정</b><span style="color:var(--mu);font-size:13px">v1.14</span></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px"><b>업무이동 문구</b><span style="color:var(--mu);font-size:13px">v1.16</span></div>
 <div class="c"><h2>1. 월별 엑셀</h2>
 <input type="file" id="f" accept=".xlsx,.xlsm">
 <div id="fi" style="color:var(--mu);font-size:13px;margin:6px 0"></div>
@@ -78,7 +71,16 @@ textarea{min-height:90px}.rw{display:flex;justify-content:space-between;gap:6px;
 <div class="r" style="margin:8px 0 0"><button id="ccp">복사</button><button class="s" id="csd">공유</button></div>
 <button class="s" id="crs" style="margin-top:8px;font-size:13px;padding:6px">새로 작성 (입력 비우기)</button></div>
 </div>
+<div class="c"><h2>기록 (업무로그)</h2>
+<div id="lgs" style="font-size:14px;margin-bottom:8px"></div>
+<select id="lf" style="margin-bottom:8px"><option value="json">형식: JSON (집계용)</option><option value="csv">형식: CSV (엑셀에서 열기)</option></select>
+<div class="r"><button id="lsv">저장</button><button class="s" id="lsh">공유</button><button class="s" id="lcp">내용 복사</button></div>
+<div id="lgm" style="font-size:13px;color:var(--mu)"></div>
+<details style="margin-top:8px"><summary style="cursor:pointer;font-size:13px;color:var(--mu)">최근 기록 보기</summary><div id="lgl" style="font-size:12px;white-space:pre-wrap;margin-top:6px"></div></details>
+<button class="s" id="ld" style="margin-top:8px;font-size:13px;padding:6px">내보낸 기록 지우기</button></div>
 <details class="c"><summary style="cursor:pointer;color:var(--mu);font-size:13px">변경 내역</summary><div style="font-size:13px;color:var(--mu);margin-top:6px">
+<b>v1.16</b> 기록 내보내기: 형식 선택(JSON/CSV) + 저장·공유·내용 복사 버튼 분리, 공유가 안 될 때 저장으로 대체<br>
+<b>v1.15</b> 기록 저장(복사·공유할 때 폰에 기록) + 기록 내보내기(JSON·CSV → DS file로 NAS 업로드)<br>
 <b>v1.14</b> 원가산정: 저녁에 야식 포함(한 줄) / 야식만 따로 한 줄<br>
 <b>v1.13</b> 원가산정: 식사 인당 목록 제거(금액은 총액 직접 입력, 괄호는 인원), 숙박비 인당 버튼 제거, 식사별 없음 버튼<br>
 <b>v1.12</b> 원가산정: 아침/저녁/야식 분리·금액 목록 선택, 식사별 인원, 지사지원 최대 3명, 수요처별(수요처 1·2…) 항목 분리<br>
@@ -274,8 +276,8 @@ $('xb').onclick=()=>{let v=$('xi').value.trim();if(!v)return;
 $('cp').onclick=async()=>{saveKm();const en0=$('en').value,t=$('out').value,p=$('cu').value.trim();
   if($('en').value==='직접'&&p){const a=LG('ph')||[];if(!a.includes(p)){a.push(p);LS('ph',a)}enOpts(p);$('cu').value='';compose();$('out').value=t}
   try{await navigator.clipboard.writeText(t)}catch(e){$('out').select();document.execCommand('copy')}
-  $('cp').textContent='복사됨 ✓';setTimeout(()=>$('cp').textContent='복사',1500);done(en0)};
-$('sd').onclick=()=>{saveKm();if(navigator.share){const en0=$('en').value;navigator.share({text:$('out').value}).then(()=>done(en0)).catch(()=>{})}else $('cp').click()};
+  $('cp').textContent='복사됨 ✓';setTimeout(()=>$('cp').textContent='복사',1500);logMove(t,en0);done(en0)};
+$('sd').onclick=()=>{saveKm();if(navigator.share){const en0=$('en').value,tx=$('out').value;navigator.share({text:tx}).then(()=>{logMove(tx,en0);done(en0)}).catch(()=>{})}else $('cp').click()};
 
 // 일정 추가
 function addStop(org){org=clean(org);if(!org)return;
@@ -367,12 +369,66 @@ $('t1').onclick=()=>tab(1);$('t2').onclick=()=>tab(2);
   if(i==='cd')dT=true;else B[bi].dirty=true;comp()});
 ML.forEach(([k])=>$('z_'+k).onclick=()=>{const z=$('z_'+k);z.classList.toggle('on');$('x_'+k).disabled=z.classList.contains('on');B[bi].dirty=true;comp()});
 $('ccp').onclick=async()=>{try{await navigator.clipboard.writeText($('co').value)}catch(e){$('co').select();document.execCommand('copy')}
-  $('ccp').textContent='복사됨 ✓';setTimeout(()=>$('ccp').textContent='복사',1500)};
-$('csd').onclick=()=>{if(navigator.share)navigator.share({text:$('co').value}).catch(()=>{});else $('ccp').click()};
+  $('ccp').textContent='복사됨 ✓';setTimeout(()=>$('ccp').textContent='복사',1500);logCost($('co').value)};
+$('csd').onclick=()=>{if(navigator.share){const tx=$('co').value;navigator.share({text:tx}).then(()=>logCost(tx)).catch(()=>{})}else $('ccp').click()};
 $('crs').onclick=()=>{B=[newB('')];bi=0;dT=false;syncCost()};
+// ===== 기록(업무로그) =====
+const stamp=()=>{const d=new Date(),z=x=>String(x).padStart(2,'0');return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}`};
+function addLog(e){
+  const L=LG('log')||[],l=L[L.length-1];
+  if(l&&l.t===e.t&&l.text===e.text&&Date.now()-l.id<120000)return;   // 같은 문구 연속 복사는 1건만
+  e.id=Date.now();e.ts=stamp();L.push(e);LS('log',L);lgUI();
+}
+function logMove(text,en0){const k=$('km').value.trim();
+  addLog({t:'move',sheet:$('sh').value,name:$('nm').value,name2:$('nm2').value,car:$('car').value,km:/^\d+$/.test(k)?+k:null,org:$('org').value.trim(),st:$('stt').value,en:en0,nx:$('nx').value.trim(),text})}
+function logCost(text){
+  addLog({t:'cost',sheet:$('sh').value,date:$('cd').value.trim(),name:$('nm').value,name2:$('nm2').value,text,blocks:JSON.parse(JSON.stringify(B)).map(b=>{delete b.dirty;return b})})}
+function lgUI(){
+  const L=LG('log')||[],ym=stamp().slice(0,7);
+  $('lgs').textContent=`이번 달 ${L.filter(e=>e.ts.startsWith(ym)).length}건 · 미내보냄 ${L.filter(e=>!e.x).length}건`;
+  $('lgl').textContent=L.slice(-15).reverse().map(e=>`${e.ts.slice(5,16)} ${e.t==='move'?'이동':'원가'} ${e.text.replace(/\n/g,' / ')}`).join('\n')||'기록 없음';
+}
+function buildLog(fmt){
+  const ym=stamp().slice(0,7),L=(LG('log')||[]).filter(e=>e.ts.startsWith(ym)),me=LG('me')||'이름없음';
+  if(!L.length)return null;
+  let body,type,ext;
+  if(fmt==='csv'){
+    const cols=['ts','t','sheet','date','name','name2','car','km','org','st','en','nx','text'],q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+    body='\ufeff'+[cols.join(',')].concat(L.map(e=>cols.map(c=>q(e[c])).join(','))).join('\r\n');type='text/csv';ext='csv';
+  }else{
+    body=JSON.stringify({app:'업무이동 문구',version:'1.16',schema:1,name:me,month:ym,exported:stamp(),entries:L},null,1);type='application/json';ext='json';
+  }
+  return{ym,body,type,fn:`업무로그_${me}_${ym}.${ext}`};
+}
+async function exportLog(mode){
+  const fmt=$('lf').value;LS('lf',fmt);
+  const r=buildLog(fmt);if(!r){$('lgm').textContent='이번 달 기록이 없습니다.';return}
+  if(mode==='copy'){
+    try{await navigator.clipboard.writeText(r.body)}catch(e){const t=document.createElement('textarea');t.value=r.body;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove()}
+    $('lgm').textContent='기록 내용을 글자로 복사했습니다. (파일이 아니라 글자 복사입니다)';return;
+  }
+  const file=new File([r.body],r.fn,{type:r.type});let done=false,msg='';
+  if(mode==='share'){
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file]});done=true;msg=`${r.fn} 공유 완료. 공유 목록에서 DS file을 고르세요.`}
+      catch(e){if(e&&e.name==='AbortError'){$('lgm').textContent='공유를 취소했습니다.';return}msg='공유에 실패해 저장으로 대체했습니다. '}
+    }else msg='이 화면에서는 파일 공유를 쓸 수 없어 저장으로 대체했습니다. ';
+  }
+  if(!done){const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=r.fn;document.body.appendChild(a);a.click();a.remove();
+    msg+=`${r.fn} 을(를) 내려받았습니다 (다운로드 폴더). DS file에서 NAS 폴더로 올려 주세요.`}
+  const all=LG('log')||[];all.forEach(e=>{if(e.ts.startsWith(r.ym))e.x=1});LS('log',all);
+  $('lgm').textContent=msg;lgUI();
+}
+$('lf').value=LG('lf')||'json';
+$('lsv').onclick=()=>exportLog('save');$('lsh').onclick=()=>exportLog('share');$('lcp').onclick=()=>exportLog('copy');
+var dtm=0;
+$('ld').onclick=()=>{const L=LG('log')||[],n=L.filter(e=>e.x).length;
+  if(!n){$('lgm').textContent='지울 내보낸 기록이 없습니다.';return}
+  if(!dtm){$('ld').textContent=`한 번 더 누르면 내보낸 ${n}건 삭제`;dtm=setTimeout(()=>{dtm=0;$('ld').textContent='내보낸 기록 지우기'},4000);return}
+  clearTimeout(dtm);dtm=0;LS('log',L.filter(e=>!e.x));$('ld').textContent='내보낸 기록 지우기';lgUI();$('lgm').textContent='지웠습니다.'};
+lgUI();
 enOpts('복귀하겠습니다.');
 const saved=LG('db2');if(saved&&Object.keys(saved).length)load(saved,LG('dbName')||'');
 const lk=LG('km');if(lk)$('km').placeholder='지난번 '+lk;
 tab(LG('tab')===2?2:1);
-if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script></body></html>
