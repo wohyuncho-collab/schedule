@@ -1,7 +1,14 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>업무이동 문구 v1.16</title>
+<title>일정이동 &amp; 원가산정</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2b6df6">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="일정이동">
 <style>
 :root{--bg:#f6f7f9;--fg:#1d2230;--card:#fff;--bd:#d9dde5;--ac:#2b6df6;--mu:#6b7280}
 @media(prefers-color-scheme:dark){:root{--bg:#14171d;--fg:#e8eaf0;--card:#1e222b;--bd:#343a47;--ac:#6b9bff;--mu:#9aa3b2}}
@@ -21,7 +28,7 @@ textarea{min-height:90px}.rw{display:flex;justify-content:space-between;gap:6px;
 .mr{display:flex;gap:8px;align-items:center;margin-bottom:8px}.mr>b{flex:0 0 40px}
 .mr input{flex:1;min-width:0}.mr button{width:auto;flex:0 0 56px;padding:10px 4px;background:var(--card);color:var(--fg);border:1px solid var(--bd)}.mr button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
 </style></head><body>
-<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px"><b>업무이동 문구</b><span style="color:var(--mu);font-size:13px">v1.16</span></div>
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px"><b>일정이동 &amp; 원가산정</b><span style="color:var(--mu);font-size:13px">v1.16</span></div>
 <div class="c"><h2>1. 월별 엑셀</h2>
 <input type="file" id="f" accept=".xlsx,.xlsm">
 <div id="fi" style="color:var(--mu);font-size:13px;margin:6px 0"></div>
@@ -431,4 +438,5 @@ enOpts('복귀하겠습니다.');
 const saved=LG('db2');if(saved&&Object.keys(saved).length)load(saved,LG('dbName')||'');
 const lk=LG('km');if(lk)$('km').placeholder='지난번 '+lk;
 tab(LG('tab')===2?2:1);
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script></body></html>

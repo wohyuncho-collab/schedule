@@ -1,6 +1,6 @@
 // 서비스 워커: 한 번 열어두면 오프라인에서도 실행됩니다.
 // 앱 파일을 수정해서 다시 올릴 때는 아래 VER 숫자를 올려 주세요.
-const VER='ilj-v1';
+const VER='ilj-v2';
 const CORE=['./','index.html','manifest.webmanifest','icons/icon-192.png','icons/icon-512.png','icons/icon-maskable-192.png','icons/icon-maskable-512.png','icons/apple-touch-icon.png','icons/favicon-32.png'];
 const CDN=['https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'];
 self.addEventListener('install',e=>{e.waitUntil((async()=>{
